@@ -1,0 +1,69 @@
+FUNCTION_BLOCK webpage  //Block definition (there may be more than one block per file)
+
+	VAR_INPUT				// define input variables							
+		title : REAL;       // crisp input values
+		headings : REAL;
+		body : REAL;
+	END_VAR
+	
+	VAR_OUTPUT				// define output variables
+		score : REAL;       // crisp output values
+	END_VAR
+	
+	// The input information comprises real variables in the form of measurable process variables, derived
+    // variables, as well as set points. The output variables are real variables in the form of correcting
+	// variables. Transformations must be performed between the input and output variables of the process
+	// and the Fuzzy world (fuzzification, defuzzification).
+	
+	// Conversion of an input value into degrees of membership for the membership
+    // functions defined on the variable taking this value.
+    // Fuzzy set 
+    
+	FUZZIFY title	
+		TERM insignificant := (0, 1)(50,0);			
+		TERM significant := (50, 0)(100,1);
+	END_FUZZIFY
+	
+	
+	FUZZIFY headings			
+		TERM irrelevant := (0, 1) (35, 0);
+		TERM relevant := (25, 0) (50, 1)(75,0);
+		TERM prevalent := (65, 0) (100, 1);
+	END_FUZZIFY
+	
+		
+	FUZZIFY body		
+		TERM infrequent := (0, 1) (35, 0);
+		TERM  average:= (30, 0) (50, 1)(75,0);
+		TERM frequent := (65, 0) (100, 1);
+	END_FUZZIFY
+
+	// Conversion of the fuzzy result of inference into a crisp output
+    // variable 
+    
+	DEFUZZIFY score			
+		TERM low := trian 0 50 100;
+		TERM average := trian 100 150 200;
+		TERM high := trian 200 250 300;  
+	
+		
+		METHOD : COG;		// Use 'Center Of Gravity' defuzzification method
+		DEFAULT := 0;		// Default value is 0 (if no rule activates defuzzifier)
+	END_DEFUZZIFY
+	
+	RULEBLOCK No1
+		AND : MIN;	// Use 'MIN' for 'AND'
+		ACT : MIN;	// Use 'MIN' for activation method
+		ACCU : MAX;	// Use 'MAX' for accumulation method
+		
+		// Rules
+		RULE 1 : IF title IS insignificant AND headings IS irrelevant  THEN score IS low;
+		RULE 2 : IF title IS significant OR headings IS prevalent OR body IS frequent THEN score IS high;
+		RULE 3 : IF headings IS irrelevant AND body IS infrequent THEN score IS low;		
+		RULE 4 : IF headings IS prevalent OR body IS frequent THEN score IS high;
+		RULE 5 : IF body IS frequent THEN score IS high;
+		RULE 6 : IF title IS significant OR headings IS prevalent THEN score IS high;
+		 
+		
+	END_RULEBLOCK
+END_FUNCTION_BLOCK
